@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mark Sampler</title>
+<title>Drawing with Code</title>
 <style>
 :root{--bg:#f2f2ef;--panel:#fafaf8;--line:#e1e1dc;--line2:#c8c8c1;--ink:#141516;--mut:#74777b;--faint:#abadb0;--acc:#ff4f1f;
   --mono:ui-monospace,"SF Mono","JetBrains Mono","IBM Plex Mono",Menlo,Consolas,monospace}
@@ -109,7 +109,7 @@ main{display:flex;flex-direction:column;min-width:0;min-height:0;padding:12px 14
         <circle cx="3" cy="3" r="1"/><circle cx="9" cy="3" r="2"/><circle cx="15" cy="3" r="1"/>
         <circle cx="3" cy="9" r="2"/><circle cx="9" cy="9" r="3"/><circle cx="15" cy="9" r="2"/>
         <circle cx="3" cy="15" r="1"/><circle cx="9" cy="15" r="2"/><circle cx="15" cy="15" r="1"/></g></svg>
-      mark-sampler <span class="tag">v0.2</span>
+      drawing-with-code <span class="tag">v0.2</span>
     </div>
     <div class="sub">Draw with data. Resample a silhouette into marks, digits and lines at descending resolutions, then pick the coarsest one that still reads.</div>
   </header>
@@ -1174,13 +1174,13 @@ document.addEventListener('keydown',e=>{
 /* ---------- export ---------- */
 function exportSVG(){
   const p=panels[sel];
-  return `<svg viewBox="${p.vb}" width="${MW}" height="${MH}" xmlns="http://www.w3.org/2000/svg"><!-- mark sampler | [${sel}] ${p.count} ${p.unit} | ${recipeText().replace(/--/g,'-')} -->${p.body}</svg>`;
+  return `<svg viewBox="${p.vb}" width="${MW}" height="${MH}" xmlns="http://www.w3.org/2000/svg"><!-- drawing with code | [${sel}] ${p.count} ${p.unit} | ${recipeText().replace(/--/g,'-')} -->${p.body}</svg>`;
 }
 function flash(id,msg){const b=$(id),t=b.textContent;b.textContent=msg;setTimeout(()=>b.textContent=t,1100);}
 $('dl').onclick=()=>{const b=new Blob([exportSVG()],{type:'image/svg+xml'}),a=document.createElement('a');
   a.href=URL.createObjectURL(b);
   const ts=new Date().toTimeString().slice(0,8).replace(/:/g,'');
-  a.download=`mark-${DRAW==='lines'?$('pattern').value:$('symbols').value}-l${sel}-s${V('seed')|0}-${ts}.svg`;a.click();};
+  a.download=`drawing-with-code-${DRAW==='lines'?$('pattern').value:$('symbols').value}-l${sel}-s${V('seed')|0}-${ts}.svg`;a.click();};
 $('copy').onclick=async()=>{await navigator.clipboard.writeText(exportSVG());flash('copy','copied');};
 $('link').onclick=async()=>{await navigator.clipboard.writeText(location.href);flash('link','copied');};
 

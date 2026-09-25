@@ -1,4 +1,4 @@
-# mark-sampler
+# Drawing with Code
 
 Draw with data. A single-file, dependency-free tool that resamples a silhouette
 into marks, digits and lines at descending resolutions, so you can pick the

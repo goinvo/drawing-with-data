@@ -31,3 +31,7 @@ then visit <http://localhost:8732>.
 
 Static site, no build step. On Vercel, import the repo with the framework preset
 set to **Other** and leave the build and output settings empty.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

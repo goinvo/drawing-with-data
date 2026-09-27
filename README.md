@@ -9,7 +9,8 @@ coarsest version that still reads.
 - **Tiles mode:** symbol ramps (rings, dots, crosses, bars, geometric tiles) and
   data glyphs: binary 0/1, digits 0–9, ASCII density, with an optional "ground"
   field of faint zeros.
-- **Lines mode:** contours, rings, spiral, parallel lines, waveforms and relief.
+- **Lines mode:** contours, rings, spiral, parallel lines, line halftone (stepped
+  bars), waveforms and relief.
   With a 3D model the lines can wrap the form: terrain contours, latitude rings
   (one or two poles), helices and slices, with hidden surfaces removed.
 - **Tone:** depth from edge, distance field, coverage, image luminance, a pasted

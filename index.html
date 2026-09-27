@@ -183,20 +183,24 @@ main{display:flex;flex-direction:column;min-width:0;min-height:0;padding:12px 14
       <option value="rings">concentric rings</option>
       <option value="spiral">spiral</option>
       <option value="lines">parallel lines</option>
+      <option value="bars">line halftone (stepped)</option>
       <option value="signal">signal (waveform)</option>
       <option value="relief">relief (depth lines)</option>
     </select>
     <div class="row"><span class="n">density</span><input type="range" id="ldens" min="0.5" max="2" step="0.05" value="1"><span class="val"></span></div>
     <div class="row"><span class="n">weight</span><input type="range" id="lweight" min="0.05" max="1.4" step="0.01" value="0.6"><span class="val"></span></div>
     <div class="row"><span class="n">modulate</span><input type="range" id="lmod" min="0" max="1" step="0.02" value="0.8"><span class="val"></span></div>
-    <div class="row" data-p="rings spiral lines signal relief"><span class="n">cutoff</span><input type="range" id="lcut" min="0" max="0.6" step="0.01" value="0.08"><span class="val"></span></div>
+    <div class="row" data-p="rings spiral lines bars signal relief"><span class="n">cutoff</span><input type="range" id="lcut" min="0" max="0.6" step="0.01" value="0.08"><span class="val"></span></div>
     <div class="row" data-p="contours"><span class="n">smooth</span><input type="range" id="lsmooth" min="0" max="3" step="1" value="2"><span class="val"></span></div>
     <div class="row" data-p="rings spiral"><span class="n">centre x</span><input type="range" id="lcx" min="0" max="1" step="0.01" value="0.5"><span class="val"></span></div>
     <div class="row" data-p="rings spiral"><span class="n">centre y</span><input type="range" id="lcy" min="0" max="1" step="0.01" value="0.5"><span class="val"></span></div>
     <label class="chk" data-src="model" data-p="rings"><input type="checkbox" id="lpole2"> second pole</label>
     <div class="row" data-src="model" data-p="rings" data-pole2><span class="n">pole 2 x</span><input type="range" id="lcx2" min="0" max="1" step="0.01" value="0.5"><span class="val"></span></div>
     <div class="row" data-src="model" data-p="rings" data-pole2><span class="n">pole 2 y</span><input type="range" id="lcy2" min="0" max="1" step="0.01" value="0"><span class="val"></span></div>
-    <div class="row" data-p="lines signal relief"><span class="n">line angle</span><input type="range" id="langle" min="0" max="180" step="5" value="0"><span class="val"></span></div>
+    <div class="row" data-p="lines bars signal relief"><span class="n">line angle</span><input type="range" id="langle" min="0" max="180" step="5" value="0"><span class="val"></span></div>
+    <div class="row" data-p="bars"><span class="n">steps</span><input type="range" id="lsteps" min="2" max="8" step="1" value="3"><span class="val"></span></div>
+    <div class="row" data-p="bars"><span class="n">cell</span><input type="range" id="lcell" min="0.25" max="6" step="0.05" value="1.5"><span class="val"></span></div>
+    <label class="chk" data-p="bars"><input type="checkbox" id="lanchor"> anchor to one side</label>
     <div class="row" data-p="signal relief"><span class="n">amplitude</span><input type="range" id="lamp" min="0.1" max="3" step="0.05" value="1.2"><span class="val"></span></div>
     <div class="row" data-p="signal"><span class="n">frequency</span><input type="range" id="lfreq" min="0.2" max="3" step="0.05" value="1"><span class="val"></span></div>
     <div class="row" data-src="model" data-p="contours"><span class="n">terrain</span><input type="range" id="lterr" min="0.3" max="6" step="0.05" value="1.8"><span class="val"></span></div>
@@ -992,6 +996,31 @@ function makeLinePanel(level,o){
     return {count,unit:'strokes',body:linesBody(d,o),vb:`0 0 ${MW} ${MH}`};
   }
 
+  if(o.pattern==='bars'){ // line halftone: each line is cut into cells whose width snaps to a few steps
+    const sp=D/(level*o.ldens),cell=sp*o.lcell,a=o.langle*Math.PI/180,ux=Math.cos(a),uy=Math.sin(a),vx=-uy,vy=ux,cx=MW/2,cy=MH/2;
+    const hmax=sp/2*o.lweight,hmin=Math.max(.2,hmax*.06),pt=(al,ac)=>[cx+ux*al+vx*ac,cy+uy*al+vy*ac];
+    for(let off=-Dg+sp/2;off<Dg;off+=sp){
+      let run=[];
+      // one stepped outline per unbroken run, so neighbouring cells never leave hairline seams
+      const flush=()=>{if(run.length){const P=[];
+        for(const c of run)P.push(pt(c.t0,c.a),pt(c.t1,c.a));
+        for(let i=run.length-1;i>=0;i--){const c=run[i];P.push(pt(c.t1,c.b),pt(c.t0,c.b));}
+        d+=polyD(orient(P,true));count++;}run=[];};
+      for(let t0=-Dg;t0<Dg;t0+=cell){
+        const t1=t0+cell;let t=0;
+        for(const f of [1/6,.5,5/6]){const al=t0+cell*f;t+=fieldAt(cx+ux*al+vx*off,cy+uy*al+vy*off)/3;}
+        const mx=cx+ux*(t0+cell/2)+vx*off,my=cy+uy*(t0+cell/2)+vy*off;
+        if(t<=o.lcut||dropped(mx,my,cell*2)){flush();continue;}
+        const q=Math.min(1,Math.ceil(clamp01((t-o.lcut)/(1-o.lcut))*o.lsteps)/o.lsteps);
+        const h=Math.max(hmin,hmax*((1-o.lmod)+o.lmod*q));
+        const lo=o.lanchor?off-hmax:off-h;
+        run.push({t0,t1,a:lo,b:lo+2*h});
+      }
+      flush();
+    }
+    return {count,unit:'bars',body:linesBody(d,o),vb:`0 0 ${MW} ${MH}`};
+  }
+
   const sp=D/(level*o.ldens),step=o.pattern==='signal'?sp*.14:sp*.5;
   const width=t=>sp/2*o.lweight*((1-o.lmod)+o.lmod*t);
   const sample=(P,H,on,x,y,extra)=>{const t=fieldAt(x,y);const [wx,wy]=wob(x,y,sp*2);
@@ -1040,7 +1069,7 @@ function opts(){
     symbols:$('symbols').value,levels:V('levels'),stroke:V('stroke'),gscale:V('gscale'),ground:V('ground'),
     tone:$('tone').value,gamma:V('gamma'),spread:V('spread'),angle:V('angle'),dlayout:$('dlayout').value,
     pattern:$('pattern').value,ldens:V('ldens'),lweight:V('lweight'),lmod:V('lmod'),lcut:V('lcut'),
-    lsmooth:V('lsmooth'),lcx:V('lcx'),lcy:V('lcy'),langle:V('langle'),lamp:V('lamp'),lfreq:V('lfreq'),loutline:$('loutline').checked,lwrap:$('lwrap').checked&&$('shape').value==='model',lterr:V('lterr'),loct:V('loct'),lpole2:$('lpole2').checked,lcx2:V('lcx2'),lcy2:V('lcy2'),
+    lsmooth:V('lsmooth'),lcx:V('lcx'),lcy:V('lcy'),langle:V('langle'),lamp:V('lamp'),lfreq:V('lfreq'),lsteps:V('lsteps'),lcell:V('lcell'),lanchor:$('lanchor').checked,loutline:$('loutline').checked,lwrap:$('lwrap').checked&&$('shape').value==='model',lterr:V('lterr'),loct:V('loct'),lpole2:$('lpole2').checked,lcx2:V('lcx2'),lcy2:V('lcy2'),
     useHatch:$('useHatch').checked,diag:$('diag').checked,tri:$('tri').checked,
     invert:$('invert').checked,ink:$('ink').value,paper:$('paper').value};
   o.fg=o.invert?o.paper:o.ink; o.bg=o.invert?o.ink:o.paper;

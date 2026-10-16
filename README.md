@@ -35,4 +35,4 @@ set to **Other** and leave the build and output settings empty.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+© 2026 GoInvo. All rights reserved — see [LICENSE](LICENSE).
